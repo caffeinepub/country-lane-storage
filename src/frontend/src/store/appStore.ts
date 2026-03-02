@@ -844,7 +844,15 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "countrylane-storage",
-      partialize: (state) => ({ currentUser: state.currentUser }),
+      partialize: (state) => ({
+        currentUser: state.currentUser,
+        facilities: state.facilities,
+        units: state.units,
+        tenants: state.tenants,
+        leases: state.leases,
+        invoices: state.invoices,
+        payments: state.payments,
+      }),
     },
   ),
 );

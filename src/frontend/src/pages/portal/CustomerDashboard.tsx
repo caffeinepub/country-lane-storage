@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useCreateCheckoutSession,
+  useFacilities,
   useMyInvoices,
   useMyLeases,
   useMyPayments,
@@ -24,11 +25,16 @@ import {
   Warehouse,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export function CustomerDashboard() {
-  const { currentUser, units, facilities } = useAppStore();
+  const {
+    currentUser,
+    units,
+    facilities: storeFacilities,
+    updateFacility,
+  } = useAppStore();
   const navigate = useNavigate();
 
   const leasesQuery = useMyLeases();
@@ -36,6 +42,28 @@ export function CustomerDashboard() {
   const paymentsQuery = useMyPayments();
   const setAutoPayMut = useSetAutoPay();
   const checkoutMut = useCreateCheckoutSession();
+  const facilitiesQuery = useFacilities();
+
+  // Sync backend facility data into store so address stays current for all users
+  useEffect(() => {
+    if (!facilitiesQuery.data || facilitiesQuery.data.length === 0) return;
+    const bf = facilitiesQuery.data[0];
+    const sf = storeFacilities[0];
+    if (
+      sf &&
+      (bf.name !== sf.name ||
+        bf.address !== sf.address ||
+        bf.timeZone !== sf.timeZone)
+    ) {
+      updateFacility(bf.id, {
+        name: bf.name,
+        address: bf.address,
+        timeZone: bf.timeZone,
+      });
+    }
+  }, [facilitiesQuery.data, storeFacilities, updateFacility]);
+
+  const facilities = facilitiesQuery.data ?? storeFacilities;
 
   const [togglingLeaseId, setTogglingLeaseId] = useState<number | null>(null);
   const [payingInvoiceId, setPayingInvoiceId] = useState<number | null>(null);
