@@ -44,27 +44,33 @@ const features = [
 const sizes = [
   {
     icon: Package,
-    size: "5×5",
+    size: "6×6",
     price: 49,
     desc: "Perfect for boxes, seasonal decorations, or small furniture. Like a large walk-in closet.",
   },
   {
     icon: Boxes,
-    size: "5×10",
+    size: "10×14",
     price: 89,
     desc: "Fits a studio apartment or small bedroom. Great for couches, TVs, and multiple boxes.",
   },
   {
     icon: Warehouse,
-    size: "10×10",
-    price: 149,
-    desc: "About half a garage. Fits a 2-bedroom apartment with room to spare.",
+    size: "12×14",
+    price: 129,
+    desc: "About half a garage. Fits a 2-bedroom apartment worth of furniture with room to spare.",
   },
   {
     icon: Container,
-    size: "10×20",
+    size: "12×16",
+    price: 149,
+    desc: "Spacious unit ideal for a full bedroom set, appliances, and business inventory.",
+  },
+  {
+    icon: Warehouse,
+    size: "12×28",
     price: 249,
-    desc: "Like a full garage. Perfect for a full home, vehicle storage, or business inventory.",
+    desc: "Like a full garage. Perfect for a full home, vehicle storage, or large business inventory.",
   },
 ];
 
@@ -280,7 +286,7 @@ export function LandingPage() {
               Choose the storage size that fits your needs and budget.
             </p>
           </motion.div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {sizes.map((s, i) => {
               const Icon = s.icon;
               return (

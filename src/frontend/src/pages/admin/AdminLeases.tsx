@@ -35,14 +35,11 @@ import {
   useAllLeases,
   useAllTenants,
   useAllUnits,
-  useCreateLease,
-  useEndLease,
-  useUpdateLease,
 } from "@/hooks/useBackendData";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { useAppStore } from "@/store/appStore";
 import type { Lease } from "@/types";
-import { Edit, FileText, Loader2, Plus, StopCircle } from "lucide-react";
+import { Edit, FileText, Plus, StopCircle } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -69,9 +66,10 @@ export function AdminLeases() {
   const leasesQuery = useAllLeases();
   const tenantsQuery = useAllTenants();
   const unitsQuery = useAllUnits();
-  const createLeaseMut = useCreateLease();
-  const updateLeaseMut = useUpdateLease();
-  const endLeaseMut = useEndLease();
+
+  const addLeaseStore = useAppStore((s) => s.addLease);
+  const updateLeaseStore = useAppStore((s) => s.updateLease);
+  const endLeaseStore = useAppStore((s) => s.endLease);
 
   const setFn = useAppStore.setState;
   useEffect(() => {
@@ -136,53 +134,43 @@ export function AdminLeases() {
     return e;
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     const e = validate();
     if (Object.keys(e).length > 0) {
       setErrors(e);
       return;
     }
 
-    try {
-      if (editingId) {
-        // Find the current lease to get its status
-        const currentLease = leases.find((l) => l.id === editingId);
-        await updateLeaseMut.mutateAsync({
-          leaseId: editingId,
-          rent: Number(form.monthlyRent),
-          billingDay: Number(form.billingDay),
-          autoPay: form.autoPay,
-          status: currentLease?.status ?? "ACTIVE",
-        });
-        toast.success("Lease updated");
-      } else {
-        const unit = units.find((u) => u.id === Number(form.unitId));
-        await createLeaseMut.mutateAsync({
-          tenantId: Number(form.tenantId),
-          unitId: Number(form.unitId),
-          startDate: form.startDate,
-          rent: Number(form.monthlyRent) || unit?.monthlyRent || 0,
-          billingDay: Number(form.billingDay),
-        });
-        toast.success("Lease created");
-      }
-      setDialogOpen(false);
-    } catch {
-      toast.error("Failed to save lease");
+    if (editingId) {
+      const currentLease = leases.find((l) => l.id === editingId);
+      updateLeaseStore(editingId, {
+        monthlyRent: Number(form.monthlyRent),
+        billingDay: Number(form.billingDay),
+        autoPay: form.autoPay,
+        status: currentLease?.status ?? "ACTIVE",
+      });
+      toast.success("Lease updated");
+    } else {
+      const unit = units.find((u) => u.id === Number(form.unitId));
+      addLeaseStore({
+        tenantId: Number(form.tenantId),
+        unitId: Number(form.unitId),
+        startDate: form.startDate,
+        monthlyRent: Number(form.monthlyRent) || unit?.monthlyRent || 0,
+        billingDay: Number(form.billingDay),
+        autoPay: form.autoPay,
+        status: "ACTIVE",
+      });
+      toast.success("Lease created");
     }
+    setDialogOpen(false);
   };
 
-  const handleEnd = async (id: number) => {
-    try {
-      await endLeaseMut.mutateAsync(id);
-      toast.success("Lease ended and unit marked vacant");
-      setEndingId(null);
-    } catch {
-      toast.error("Failed to end lease");
-    }
+  const handleEnd = (id: number) => {
+    endLeaseStore(id);
+    toast.success("Lease ended and unit marked vacant");
+    setEndingId(null);
   };
-
-  const isSaving = createLeaseMut.isPending || updateLeaseMut.isPending;
 
   return (
     <div>
@@ -467,11 +455,9 @@ export function AdminLeases() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isSaving}
               className="bg-accent hover:bg-accent/90 text-accent-foreground"
               data-ocid="leases.dialog.submit_button"
             >
-              {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingId ? "Update" : "Create"}
             </Button>
           </DialogFooter>
@@ -498,12 +484,8 @@ export function AdminLeases() {
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground"
               onClick={() => endingId && handleEnd(endingId)}
-              disabled={endLeaseMut.isPending}
               data-ocid="leases.end_lease.confirm_button"
             >
-              {endLeaseMut.isPending && (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              )}
               End Lease
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -10,64 +10,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  useAllInvoices,
-  useAllLeases,
-  useAllTenants,
-  useAllUnits,
-  useGenerateDueInvoices,
-  useMarkOverdueInvoices,
-  useUpdateInvoiceStatus,
-} from "@/hooks/useBackendData";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { useAppStore } from "@/store/appStore";
 import type { InvoiceStatus } from "@/types";
-import {
-  AlertTriangle,
-  CheckCircle,
-  Loader2,
-  Receipt,
-  Send,
-  Zap,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle, Receipt, Send, Zap } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export function AdminInvoices() {
-  const invoicesQuery = useAllInvoices();
-  const leasesQuery = useAllLeases();
-  const tenantsQuery = useAllTenants();
-  const unitsQuery = useAllUnits();
-
-  const markOverdueMut = useMarkOverdueInvoices();
-  const generateMut = useGenerateDueInvoices();
-  const updateStatusMut = useUpdateInvoiceStatus();
-
-  const setFn = useAppStore.setState;
-  useEffect(() => {
-    if (invoicesQuery.data) setFn({ invoices: invoicesQuery.data });
-  }, [invoicesQuery.data, setFn]);
-  useEffect(() => {
-    if (leasesQuery.data) setFn({ leases: leasesQuery.data });
-  }, [leasesQuery.data, setFn]);
-  useEffect(() => {
-    if (tenantsQuery.data) setFn({ tenants: tenantsQuery.data });
-  }, [tenantsQuery.data, setFn]);
-  useEffect(() => {
-    if (unitsQuery.data) setFn({ units: unitsQuery.data });
-  }, [unitsQuery.data, setFn]);
-
-  const storeInvoices = useAppStore((s) => s.invoices);
-  const storeLeases = useAppStore((s) => s.leases);
-  const storeTenants = useAppStore((s) => s.tenants);
-  const storeUnits = useAppStore((s) => s.units);
-
-  const invoices = invoicesQuery.data ?? storeInvoices;
-  const leases = leasesQuery.data ?? storeLeases;
-  const tenants = tenantsQuery.data ?? storeTenants;
-  const units = unitsQuery.data ?? storeUnits;
+  const invoices = useAppStore((s) => s.invoices);
+  const leases = useAppStore((s) => s.leases);
+  const tenants = useAppStore((s) => s.tenants);
+  const units = useAppStore((s) => s.units);
+  const updateInvoice = useAppStore((s) => s.updateInvoice);
+  const markOverdueInvoices = useAppStore((s) => s.markOverdueInvoices);
+  const generateInvoices = useAppStore((s) => s.generateInvoices);
 
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "ALL">(
     "ALL",
@@ -95,48 +53,33 @@ export function AdminInvoices() {
     })
     .sort((a, b) => b.dueDate.localeCompare(a.dueDate));
 
-  const handleMarkOverdue = async () => {
-    try {
-      const count = await markOverdueMut.mutateAsync();
-      toast[count > 0 ? "success" : "info"](
-        count > 0
-          ? `Marked ${count} invoice(s) as overdue`
-          : "No invoices to mark as overdue",
-      );
-    } catch {
-      toast.error("Failed to mark overdue invoices");
-    }
+  const handleMarkOverdue = () => {
+    const count = markOverdueInvoices();
+    toast[count > 0 ? "success" : "info"](
+      count > 0
+        ? `Marked ${count} invoice(s) as overdue`
+        : "No invoices to mark as overdue",
+    );
   };
 
-  const handleGenerate = async () => {
-    try {
-      const count = await generateMut.mutateAsync();
-      toast[count > 0 ? "success" : "info"](
-        count > 0
-          ? `Generated ${count} invoice(s)`
-          : "No invoices to generate today",
-      );
-    } catch {
-      toast.error("Failed to generate invoices");
-    }
+  const handleGenerate = () => {
+    const newInvoices = generateInvoices();
+    const count = newInvoices.length;
+    toast[count > 0 ? "success" : "info"](
+      count > 0
+        ? `Generated ${count} invoice(s)`
+        : "No invoices to generate today",
+    );
   };
 
-  const handleMarkSent = async (id: number) => {
-    try {
-      await updateStatusMut.mutateAsync({ invoiceId: id, status: "SENT" });
-      toast.success("Invoice marked as sent");
-    } catch {
-      toast.error("Failed to update invoice");
-    }
+  const handleMarkSent = (id: number) => {
+    updateInvoice(id, { status: "SENT" });
+    toast.success("Invoice marked as sent");
   };
 
-  const handleMarkPaid = async (id: number) => {
-    try {
-      await updateStatusMut.mutateAsync({ invoiceId: id, status: "PAID" });
-      toast.success("Invoice marked as paid");
-    } catch {
-      toast.error("Failed to update invoice");
-    }
+  const handleMarkPaid = (id: number) => {
+    updateInvoice(id, { status: "PAID" });
+    toast.success("Invoice marked as paid");
   };
 
   return (
@@ -150,28 +93,18 @@ export function AdminInvoices() {
               variant="outline"
               size="sm"
               onClick={handleMarkOverdue}
-              disabled={markOverdueMut.isPending}
               data-ocid="invoices.mark_overdue.button"
             >
-              {markOverdueMut.isPending ? (
-                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-              ) : (
-                <AlertTriangle className="w-4 h-4 mr-1.5" />
-              )}
+              <AlertTriangle className="w-4 h-4 mr-1.5" />
               Mark Overdue
             </Button>
             <Button
               size="sm"
               onClick={handleGenerate}
-              disabled={generateMut.isPending}
               className="bg-accent hover:bg-accent/90 text-accent-foreground"
               data-ocid="invoices.generate.button"
             >
-              {generateMut.isPending ? (
-                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-              ) : (
-                <Zap className="w-4 h-4 mr-1.5" />
-              )}
+              <Zap className="w-4 h-4 mr-1.5" />
               Generate
             </Button>
           </div>
@@ -219,13 +152,7 @@ export function AdminInvoices() {
       >
         <Card>
           <CardContent className="p-0">
-            {invoicesQuery.isPending ? (
-              <div className="p-6 space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : filtered.length === 0 ? (
+            {filtered.length === 0 ? (
               <EmptyState
                 title="No invoices found"
                 description="Adjust your filters or generate new invoices."
@@ -302,7 +229,6 @@ export function AdminInvoices() {
                                   size="sm"
                                   className="h-7 px-2 text-xs"
                                   onClick={() => handleMarkSent(invoice.id)}
-                                  disabled={updateStatusMut.isPending}
                                   data-ocid={`invoices.mark_sent.button.${idx + 1}`}
                                 >
                                   <Send className="w-3 h-3 mr-1" />
@@ -316,7 +242,6 @@ export function AdminInvoices() {
                                   size="sm"
                                   className="h-7 px-2 text-xs text-green-700 hover:text-green-700 hover:bg-green-50"
                                   onClick={() => handleMarkPaid(invoice.id)}
-                                  disabled={updateStatusMut.isPending}
                                   data-ocid={`invoices.mark_paid.button.${idx + 1}`}
                                 >
                                   <CheckCircle className="w-3 h-3 mr-1" />

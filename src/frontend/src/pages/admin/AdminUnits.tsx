@@ -31,16 +31,11 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  useAllUnits,
-  useCreateUnit,
-  useDeleteUnit,
-  useUpdateUnit,
-} from "@/hooks/useBackendData";
+import { useAllUnits } from "@/hooks/useBackendData";
 import { formatCurrency } from "@/lib/formatters";
 import { useAppStore } from "@/store/appStore";
 import type { StorageUnit, UnitStatus } from "@/types";
-import { Edit, Loader2, Plus, Trash2, Warehouse } from "lucide-react";
+import { Edit, Plus, Trash2, Warehouse } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -50,7 +45,7 @@ type UnitForm = Omit<StorageUnit, "id"> & { id?: number };
 const EMPTY_FORM: UnitForm = {
   facilityId: 1,
   unitNumber: "",
-  size: "5x5",
+  size: "6x6",
   floor: 1,
   row: 0,
   col: 0,
@@ -61,9 +56,10 @@ const EMPTY_FORM: UnitForm = {
 
 export function AdminUnits() {
   const unitsQuery = useAllUnits();
-  const createUnitMut = useCreateUnit();
-  const updateUnitMut = useUpdateUnit();
-  const deleteUnitMut = useDeleteUnit();
+
+  const addUnitStore = useAppStore((s) => s.addUnit);
+  const updateUnitStore = useAppStore((s) => s.updateUnit);
+  const deleteUnitStore = useAppStore((s) => s.deleteUnit);
 
   const setFn = useAppStore.setState;
   useEffect(() => {
@@ -99,60 +95,50 @@ export function AdminUnits() {
     return e;
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     const e = validate();
     if (Object.keys(e).length > 0) {
       setErrors(e);
       return;
     }
-    try {
-      if (editingId) {
-        await updateUnitMut.mutateAsync({
-          id: editingId,
-          num: form.unitNumber,
-          sz: form.size,
-          fl: form.floor,
-          rw: form.row,
-          cl: form.col,
-          rent: form.monthlyRent,
-          status: form.status,
-          notes: form.notes,
-        });
-        toast.success("Unit updated");
-      } else {
-        await createUnitMut.mutateAsync({
-          fid: form.facilityId,
-          num: form.unitNumber,
-          sz: form.size,
-          fl: form.floor,
-          rw: form.row,
-          cl: form.col,
-          rent: form.monthlyRent,
-          notes: form.notes,
-        });
-        toast.success("Unit added");
-      }
-      setDialogOpen(false);
-    } catch {
-      toast.error("Failed to save unit");
+    if (editingId) {
+      updateUnitStore(editingId, {
+        unitNumber: form.unitNumber,
+        size: form.size,
+        floor: form.floor,
+        row: form.row,
+        col: form.col,
+        monthlyRent: form.monthlyRent,
+        status: form.status,
+        notes: form.notes,
+      });
+      toast.success("Unit updated");
+    } else {
+      addUnitStore({
+        facilityId: form.facilityId,
+        unitNumber: form.unitNumber,
+        size: form.size,
+        floor: form.floor,
+        row: form.row,
+        col: form.col,
+        monthlyRent: form.monthlyRent,
+        status: form.status,
+        notes: form.notes,
+      });
+      toast.success("Unit added");
     }
+    setDialogOpen(false);
   };
 
-  const handleDelete = async (id: number) => {
-    try {
-      await deleteUnitMut.mutateAsync(id);
-      toast.success("Unit deleted");
-      setDeleteId(null);
-    } catch {
-      toast.error("Failed to delete unit");
-    }
+  const handleDelete = (id: number) => {
+    deleteUnitStore(id);
+    toast.success("Unit deleted");
+    setDeleteId(null);
   };
 
   const setField = <K extends keyof UnitForm>(key: K, value: UnitForm[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
   };
-
-  const isSaving = createUnitMut.isPending || updateUnitMut.isPending;
 
   return (
     <div>
@@ -321,7 +307,7 @@ export function AdminUnits() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {["5x5", "5x10", "10x10", "10x20", "20x20"].map((s) => (
+                  {["6x6", "10x14", "12x14", "12x16", "12x28"].map((s) => (
                     <SelectItem key={s} value={s}>
                       {s} ft
                     </SelectItem>
@@ -421,11 +407,9 @@ export function AdminUnits() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isSaving}
               className="bg-accent hover:bg-accent/90 text-accent-foreground"
               data-ocid="units.dialog.submit_button"
             >
-              {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingId ? "Update" : "Add"}
             </Button>
           </DialogFooter>
@@ -451,12 +435,8 @@ export function AdminUnits() {
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground"
               onClick={() => deleteId && handleDelete(deleteId)}
-              disabled={deleteUnitMut.isPending}
               data-ocid="units.delete.confirm_button"
             >
-              {deleteUnitMut.isPending && (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              )}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

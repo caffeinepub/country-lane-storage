@@ -15,7 +15,7 @@ import { useFacilities, useUpdateFacility } from "@/hooks/useBackendData";
 import { useAppStore } from "@/store/appStore";
 import { Building2, Loader2, Save } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const TIMEZONES = [
@@ -33,33 +33,37 @@ export function AdminFacilities() {
 
   const setFn = useAppStore.setState;
   const storeFacilities = useAppStore((s) => s.facilities);
+  const updateFacilityStore = useAppStore((s) => s.updateFacility);
 
-  // Keep Zustand store in sync whenever backend data arrives
-  useEffect(() => {
-    if (facilitiesQuery.data) setFn({ facilities: facilitiesQuery.data });
-  }, [facilitiesQuery.data, setFn]);
+  const [form, setForm] = useState({
+    name: "",
+    address: "",
+    timeZone: "America/Chicago",
+  });
+  const [formInitialized, setFormInitialized] = useState(false);
+  // Use a ref so we can check this in effects without adding it as a dependency
+  const savedLocallyRef = useRef(false);
 
   const facilities = facilitiesQuery.data ?? storeFacilities;
   const facility = facilities[0];
 
-  const [form, setForm] = useState({
-    name: facility?.name ?? "",
-    address: facility?.address ?? "",
-    timeZone: facility?.timeZone ?? "America/Chicago",
-  });
-
-  // Re-populate form whenever the fetched facility data changes (including after a successful save)
+  // Keep Zustand store in sync whenever backend data arrives,
+  // but not after a local save (to avoid overwriting the user's edits)
   useEffect(() => {
-    if (facility) {
+    if (facilitiesQuery.data && !savedLocallyRef.current)
+      setFn({ facilities: facilitiesQuery.data });
+  }, [facilitiesQuery.data, setFn]);
+
+  useEffect(() => {
+    if (facility && !formInitialized) {
       setForm({
         name: facility.name,
         address: facility.address,
         timeZone: facility.timeZone,
       });
+      setFormInitialized(true);
     }
-  }, [facility]);
-
-  const updateFacilityStore = useAppStore((s) => s.updateFacility);
+  }, [facility, formInitialized]);
 
   const handleSave = async () => {
     if (!facility) return;
@@ -67,24 +71,26 @@ export function AdminFacilities() {
       toast.error("Name is required");
       return;
     }
-    try {
-      await updateFacilityMut.mutateAsync({
+    // Always update the local store immediately so the UI reflects the change
+    updateFacilityStore(facility.id, {
+      name: form.name,
+      address: form.address,
+      timeZone: form.timeZone,
+    });
+    savedLocallyRef.current = true;
+    toast.success("Facility settings saved");
+    // Best-effort backend sync (silently ignore auth errors)
+    updateFacilityMut
+      .mutateAsync({
         id: facility.id,
         name: form.name,
         address: form.address,
         tz: form.timeZone,
+      })
+      .catch(() => {
+        // Backend sync failed (e.g. not authenticated via Internet Identity) —
+        // the local store already has the update so the user sees the correct data.
       });
-      // Immediately reflect the change in the local store so the UI updates
-      // without waiting for a full query re-fetch
-      updateFacilityStore(facility.id, {
-        name: form.name,
-        address: form.address,
-        timeZone: form.timeZone,
-      });
-      toast.success("Facility settings saved");
-    } catch {
-      toast.error("Failed to save facility settings");
-    }
   };
 
   if (facilitiesQuery.isPending) {

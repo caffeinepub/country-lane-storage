@@ -26,14 +26,12 @@ import {
   useAllInvoices,
   useAllLeases,
   useAllTenants,
-  useCreateTenant,
-  useUpdateTenant,
 } from "@/hooks/useBackendData";
 import { formatCurrency } from "@/lib/formatters";
 import { useAppStore } from "@/store/appStore";
 import type { Tenant } from "@/types";
 import { Link } from "@tanstack/react-router";
-import { Edit, Eye, Loader2, Plus, Search, Users } from "lucide-react";
+import { Edit, Eye, Plus, Search, Users } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -50,8 +48,9 @@ export function AdminTenants() {
   const tenantsQuery = useAllTenants();
   const leasesQuery = useAllLeases();
   const invoicesQuery = useAllInvoices();
-  const createTenantMut = useCreateTenant();
-  const updateTenantMut = useUpdateTenant();
+
+  const addTenant = useAppStore((s) => s.addTenant);
+  const updateTenantStore = useAppStore((s) => s.updateTenant);
 
   // Keep store in sync
   const setFn = useAppStore.setState;
@@ -129,40 +128,30 @@ export function AdminTenants() {
     return e;
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     const e = validate();
     if (Object.keys(e).length > 0) {
       setErrors(e);
       return;
     }
-    try {
-      if (editingId) {
-        await updateTenantMut.mutateAsync({
-          id: editingId,
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          addr: form.address,
-          payMethod: form.preferredPaymentMethod,
-        });
-        toast.success("Tenant updated");
-      } else {
-        await createTenantMut.mutateAsync({
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          addr: form.address,
-          payMethod: form.preferredPaymentMethod,
-        });
-        toast.success("Tenant added");
-      }
-      setDialogOpen(false);
-    } catch {
-      toast.error("Failed to save tenant");
+    const tenantData = {
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      address: form.address,
+      preferredPaymentMethod: form.preferredPaymentMethod,
+    };
+    if (editingId) {
+      updateTenantStore(editingId, tenantData);
+      toast.success("Tenant updated");
+    } else {
+      addTenant(tenantData);
+      toast.success("Tenant added");
     }
+    setDialogOpen(false);
   };
 
-  const isSaving = createTenantMut.isPending || updateTenantMut.isPending;
+  const isSaving = false;
 
   return (
     <div>
@@ -378,7 +367,6 @@ export function AdminTenants() {
               className="bg-accent hover:bg-accent/90 text-accent-foreground"
               data-ocid="tenants.dialog.submit_button"
             >
-              {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingId ? "Update" : "Add"}
             </Button>
           </DialogFooter>

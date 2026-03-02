@@ -47,21 +47,9 @@ function AppShell() {
   useEffect(() => {
     if (!actor || isFetching) return;
     // Seed demo data on startup (idempotent — safe to call multiple times)
-    svc
-      .seedDemoData(actor)
-      .then(() => {
-        // After seeding, ensure facility name is correct
-        return svc.updateFacilityOnBackend(
-          actor,
-          1,
-          "Country Lane Storage",
-          "456 Country Lane, Springfield, IL 62701",
-          "America/Chicago",
-        );
-      })
-      .catch(() => {
-        // Silently fail — demo data and local state are the fallback
-      });
+    svc.seedDemoData(actor).catch(() => {
+      // Silently fail — demo data and local state are the fallback
+    });
   }, [actor, isFetching]);
 
   return (

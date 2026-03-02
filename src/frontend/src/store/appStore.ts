@@ -28,12 +28,12 @@ const DEMO_FACILITIES: Facility[] = [
 ];
 
 const DEMO_UNITS: StorageUnit[] = [
-  // Row 0
+  // Row 0 — 6x6 units
   {
     id: 1,
     facilityId: 1,
     unitNumber: "A1",
-    size: "5x5",
+    size: "6x6",
     floor: 1,
     row: 0,
     col: 0,
@@ -45,7 +45,7 @@ const DEMO_UNITS: StorageUnit[] = [
     id: 2,
     facilityId: 1,
     unitNumber: "A2",
-    size: "5x5",
+    size: "6x6",
     floor: 1,
     row: 0,
     col: 1,
@@ -57,7 +57,7 @@ const DEMO_UNITS: StorageUnit[] = [
     id: 3,
     facilityId: 1,
     unitNumber: "A3",
-    size: "5x5",
+    size: "6x6",
     floor: 1,
     row: 0,
     col: 2,
@@ -69,7 +69,7 @@ const DEMO_UNITS: StorageUnit[] = [
     id: 4,
     facilityId: 1,
     unitNumber: "A4",
-    size: "5x5",
+    size: "6x6",
     floor: 1,
     row: 0,
     col: 3,
@@ -77,12 +77,12 @@ const DEMO_UNITS: StorageUnit[] = [
     status: "RESERVED",
     notes: "",
   },
-  // Row 1
+  // Row 1 — 10x14 units
   {
     id: 5,
     facilityId: 1,
     unitNumber: "B1",
-    size: "5x10",
+    size: "10x14",
     floor: 1,
     row: 1,
     col: 0,
@@ -94,7 +94,7 @@ const DEMO_UNITS: StorageUnit[] = [
     id: 6,
     facilityId: 1,
     unitNumber: "B2",
-    size: "5x10",
+    size: "10x14",
     floor: 1,
     row: 1,
     col: 1,
@@ -106,7 +106,7 @@ const DEMO_UNITS: StorageUnit[] = [
     id: 7,
     facilityId: 1,
     unitNumber: "B3",
-    size: "5x10",
+    size: "10x14",
     floor: 1,
     row: 1,
     col: 2,
@@ -118,7 +118,7 @@ const DEMO_UNITS: StorageUnit[] = [
     id: 8,
     facilityId: 1,
     unitNumber: "B4",
-    size: "5x10",
+    size: "10x14",
     floor: 1,
     row: 1,
     col: 3,
@@ -126,16 +126,16 @@ const DEMO_UNITS: StorageUnit[] = [
     status: "DELINQUENT",
     notes: "",
   },
-  // Row 2
+  // Row 2 — 12x14 and 12x16 units
   {
     id: 9,
     facilityId: 1,
     unitNumber: "C1",
-    size: "10x10",
+    size: "12x14",
     floor: 1,
     row: 2,
     col: 0,
-    monthlyRent: 149,
+    monthlyRent: 129,
     status: "VACANT",
     notes: "",
   },
@@ -143,11 +143,11 @@ const DEMO_UNITS: StorageUnit[] = [
     id: 10,
     facilityId: 1,
     unitNumber: "C2",
-    size: "10x10",
+    size: "12x14",
     floor: 1,
     row: 2,
     col: 1,
-    monthlyRent: 149,
+    monthlyRent: 129,
     status: "OCCUPIED",
     notes: "",
   },
@@ -155,7 +155,7 @@ const DEMO_UNITS: StorageUnit[] = [
     id: 11,
     facilityId: 1,
     unitNumber: "C3",
-    size: "10x10",
+    size: "12x16",
     floor: 1,
     row: 2,
     col: 2,
@@ -167,7 +167,7 @@ const DEMO_UNITS: StorageUnit[] = [
     id: 12,
     facilityId: 1,
     unitNumber: "C4",
-    size: "10x10",
+    size: "12x16",
     floor: 1,
     row: 2,
     col: 3,
@@ -175,12 +175,12 @@ const DEMO_UNITS: StorageUnit[] = [
     status: "DISABLED",
     notes: "Under maintenance",
   },
-  // Row 3
+  // Row 3 — 12x28 units
   {
     id: 13,
     facilityId: 1,
     unitNumber: "D1",
-    size: "10x20",
+    size: "12x28",
     floor: 1,
     row: 3,
     col: 0,
@@ -192,7 +192,7 @@ const DEMO_UNITS: StorageUnit[] = [
     id: 14,
     facilityId: 1,
     unitNumber: "D2",
-    size: "10x20",
+    size: "12x28",
     floor: 1,
     row: 3,
     col: 1,
@@ -204,7 +204,7 @@ const DEMO_UNITS: StorageUnit[] = [
     id: 15,
     facilityId: 1,
     unitNumber: "D3",
-    size: "10x20",
+    size: "12x28",
     floor: 1,
     row: 3,
     col: 2,
@@ -216,7 +216,7 @@ const DEMO_UNITS: StorageUnit[] = [
     id: 16,
     facilityId: 1,
     unitNumber: "D4",
-    size: "10x20",
+    size: "12x28",
     floor: 1,
     row: 3,
     col: 3,
@@ -700,30 +700,50 @@ export const useAppStore = create<AppState>()(
         const state = get();
         const today = new Date().toISOString().split("T")[0];
         const todayDate = new Date(today);
+        const currentYear = todayDate.getFullYear();
+        const currentMonth = todayDate.getMonth();
         const newInvoices: Invoice[] = [];
 
         for (const lease of state.leases) {
           if (lease.status !== "ACTIVE") continue;
 
-          // Check if billing day is today
-          if (todayDate.getDate() !== lease.billingDay) continue;
-
-          // Check if invoice already exists for this period
-          const periodStart = today;
-          const existing = state.invoices.find(
-            (i) => i.leaseId === lease.id && i.periodStart === periodStart,
-          );
+          // Check if an invoice already exists for this lease this month
+          const existing = state.invoices.find((i) => {
+            if (i.leaseId !== lease.id) return false;
+            const d = new Date(i.periodStart);
+            return (
+              d.getFullYear() === currentYear && d.getMonth() === currentMonth
+            );
+          });
           if (existing) continue;
 
-          const periodEnd = new Date(todayDate);
-          periodEnd.setMonth(periodEnd.getMonth() + 1);
-          periodEnd.setDate(periodEnd.getDate() - 1);
+          // Use the lease's billing day as the due date, clamped to the last day of the month
+          const billingDay = lease.billingDay;
+          const daysInMonth = new Date(
+            currentYear,
+            currentMonth + 1,
+            0,
+          ).getDate();
+          const dueDayOfMonth = Math.min(billingDay, daysInMonth);
+          const dueDate = new Date(currentYear, currentMonth, dueDayOfMonth);
+
+          // Period: billing day of this month → billing day - 1 of next month
+          const periodStart = new Date(
+            currentYear,
+            currentMonth,
+            dueDayOfMonth,
+          );
+          const periodEnd = new Date(
+            currentYear,
+            currentMonth + 1,
+            dueDayOfMonth - 1,
+          );
 
           const invoice = get().addInvoice({
             leaseId: lease.id,
-            periodStart,
+            periodStart: periodStart.toISOString().split("T")[0],
             periodEnd: periodEnd.toISOString().split("T")[0],
-            dueDate: today,
+            dueDate: dueDate.toISOString().split("T")[0],
             amount: lease.monthlyRent,
             status: "SENT",
             lastSentAt: today,
