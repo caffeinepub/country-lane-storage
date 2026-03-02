@@ -1,0 +1,121 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Font Declarations */
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("/assets/fonts/PlusJakartaSans[wght].woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "General Sans";
+  src: url("/assets/fonts/GeneralSans[wght].woff2") format("woff2");
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+
+    /* StoreSmart Design Tokens — Deep Navy + Warm Orange palette */
+    --background: 0.97 0.008 240;
+    --foreground: 0.18 0.04 240;
+
+    --card: 1 0 0;
+    --card-foreground: 0.18 0.04 240;
+
+    --popover: 1 0 0;
+    --popover-foreground: 0.18 0.04 240;
+
+    /* Primary: Deep Navy */
+    --primary: 0.28 0.07 240;
+    --primary-foreground: 0.98 0.005 240;
+
+    /* Secondary: Light steel */
+    --secondary: 0.93 0.02 240;
+    --secondary-foreground: 0.28 0.07 240;
+
+    /* Muted */
+    --muted: 0.94 0.012 240;
+    --muted-foreground: 0.52 0.03 240;
+
+    /* Accent: Warm Orange */
+    --accent: 0.65 0.18 45;
+    --accent-foreground: 1 0 0;
+
+    /* Status colors */
+    --success: 0.55 0.15 140;
+    --success-foreground: 1 0 0;
+    --warning: 0.72 0.18 80;
+    --warning-foreground: 0.18 0.04 240;
+
+    --destructive: 0.55 0.2 15;
+    --destructive-foreground: 0.98 0 0;
+
+    --border: 0.88 0.02 240;
+    --input: 0.88 0.02 240;
+    --ring: 0.28 0.07 240;
+
+    /* Charts */
+    --chart-1: 0.28 0.07 240;
+    --chart-2: 0.65 0.18 45;
+    --chart-3: 0.55 0.15 140;
+    --chart-4: 0.72 0.18 80;
+    --chart-5: 0.55 0.2 15;
+
+    /* Sidebar */
+    --sidebar: 0.22 0.06 240;
+    --sidebar-foreground: 0.9 0.02 240;
+    --sidebar-primary: 0.65 0.18 45;
+    --sidebar-primary-foreground: 1 0 0;
+    --sidebar-accent: 0.3 0.07 240;
+    --sidebar-accent-foreground: 0.95 0.01 240;
+    --sidebar-border: 0.32 0.065 240;
+    --sidebar-ring: 0.65 0.18 45;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer utilities {
+  /* Status badge colors */
+  .status-vacant { @apply bg-green-100 text-green-800 border-green-200; }
+  .status-occupied { @apply bg-blue-100 text-blue-800 border-blue-200; }
+  .status-reserved { @apply bg-amber-100 text-amber-800 border-amber-200; }
+  .status-delinquent { @apply bg-red-100 text-red-800 border-red-200; }
+  .status-disabled { @apply bg-gray-100 text-gray-600 border-gray-200; }
+
+  /* Invoice status badges */
+  .invoice-paid { @apply bg-green-100 text-green-800 border-green-200; }
+  .invoice-sent { @apply bg-blue-100 text-blue-800 border-blue-200; }
+  .invoice-overdue { @apply bg-red-100 text-red-800 border-red-200; }
+  .invoice-draft { @apply bg-gray-100 text-gray-600 border-gray-200; }
+
+  /* Unit map grid cells */
+  .unit-vacant { background: oklch(0.92 0.1 140); border-color: oklch(0.7 0.15 140); color: oklch(0.25 0.1 140); }
+  .unit-occupied { background: oklch(0.88 0.1 240); border-color: oklch(0.55 0.15 240); color: oklch(0.2 0.08 240); }
+  .unit-reserved { background: oklch(0.95 0.12 80); border-color: oklch(0.72 0.15 80); color: oklch(0.35 0.1 80); }
+  .unit-delinquent { background: oklch(0.93 0.12 20); border-color: oklch(0.6 0.2 20); color: oklch(0.3 0.12 20); }
+  .unit-disabled { background: oklch(0.92 0 0); border-color: oklch(0.75 0 0); color: oklch(0.45 0 0); }
+
+  .nav-link-active {
+    background: oklch(var(--sidebar-accent));
+    color: oklch(var(--sidebar-accent-foreground));
+  }
+}
