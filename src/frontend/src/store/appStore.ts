@@ -27,380 +27,155 @@ const DEMO_FACILITIES: Facility[] = [
   },
 ];
 
-const DEMO_UNITS: StorageUnit[] = [
-  // Row 0 — 6x6 units
-  {
-    id: 1,
-    facilityId: 1,
-    unitNumber: "A1",
-    size: "6x6",
-    floor: 1,
-    row: 0,
-    col: 0,
-    monthlyRent: 49,
-    status: "VACANT",
-    notes: "",
-  },
-  {
-    id: 2,
-    facilityId: 1,
-    unitNumber: "A2",
-    size: "6x6",
-    floor: 1,
-    row: 0,
-    col: 1,
-    monthlyRent: 49,
-    status: "OCCUPIED",
-    notes: "",
-  },
-  {
-    id: 3,
-    facilityId: 1,
-    unitNumber: "A3",
-    size: "6x6",
-    floor: 1,
-    row: 0,
-    col: 2,
-    monthlyRent: 49,
-    status: "OCCUPIED",
-    notes: "",
-  },
-  {
-    id: 4,
-    facilityId: 1,
-    unitNumber: "A4",
-    size: "6x6",
-    floor: 1,
-    row: 0,
-    col: 3,
-    monthlyRent: 49,
-    status: "RESERVED",
-    notes: "",
-  },
-  // Row 1 — 10x14 units
-  {
-    id: 5,
-    facilityId: 1,
-    unitNumber: "B1",
-    size: "10x14",
-    floor: 1,
-    row: 1,
-    col: 0,
-    monthlyRent: 89,
-    status: "VACANT",
-    notes: "",
-  },
-  {
-    id: 6,
-    facilityId: 1,
-    unitNumber: "B2",
-    size: "10x14",
-    floor: 1,
-    row: 1,
-    col: 1,
-    monthlyRent: 89,
-    status: "OCCUPIED",
-    notes: "",
-  },
-  {
-    id: 7,
-    facilityId: 1,
-    unitNumber: "B3",
-    size: "10x14",
-    floor: 1,
-    row: 1,
-    col: 2,
-    monthlyRent: 89,
-    status: "VACANT",
-    notes: "",
-  },
-  {
-    id: 8,
-    facilityId: 1,
-    unitNumber: "B4",
-    size: "10x14",
-    floor: 1,
-    row: 1,
-    col: 3,
-    monthlyRent: 89,
-    status: "DELINQUENT",
-    notes: "",
-  },
-  // Row 2 — 12x14 and 12x16 units
-  {
-    id: 9,
-    facilityId: 1,
-    unitNumber: "C1",
-    size: "12x14",
-    floor: 1,
-    row: 2,
-    col: 0,
-    monthlyRent: 129,
-    status: "VACANT",
-    notes: "",
-  },
-  {
-    id: 10,
-    facilityId: 1,
-    unitNumber: "C2",
-    size: "12x14",
-    floor: 1,
-    row: 2,
-    col: 1,
-    monthlyRent: 129,
-    status: "OCCUPIED",
-    notes: "",
-  },
-  {
-    id: 11,
-    facilityId: 1,
-    unitNumber: "C3",
-    size: "12x16",
-    floor: 1,
-    row: 2,
-    col: 2,
-    monthlyRent: 149,
-    status: "VACANT",
-    notes: "",
-  },
-  {
-    id: 12,
-    facilityId: 1,
-    unitNumber: "C4",
-    size: "12x16",
-    floor: 1,
-    row: 2,
-    col: 3,
-    monthlyRent: 149,
-    status: "DISABLED",
-    notes: "Under maintenance",
-  },
-  // Row 3 — 12x28 units
-  {
-    id: 13,
-    facilityId: 1,
-    unitNumber: "D1",
-    size: "12x28",
-    floor: 1,
-    row: 3,
-    col: 0,
-    monthlyRent: 249,
-    status: "VACANT",
-    notes: "",
-  },
-  {
-    id: 14,
-    facilityId: 1,
-    unitNumber: "D2",
-    size: "12x28",
-    floor: 1,
-    row: 3,
-    col: 1,
-    monthlyRent: 249,
-    status: "OCCUPIED",
-    notes: "",
-  },
-  {
-    id: 15,
-    facilityId: 1,
-    unitNumber: "D3",
-    size: "12x28",
-    floor: 1,
-    row: 3,
-    col: 2,
-    monthlyRent: 249,
-    status: "OCCUPIED",
-    notes: "",
-  },
-  {
-    id: 16,
-    facilityId: 1,
-    unitNumber: "D4",
-    size: "12x28",
-    floor: 1,
-    row: 3,
-    col: 3,
-    monthlyRent: 249,
-    status: "RESERVED",
-    notes: "",
-  },
+// Unit layout: units 1-24 are 10x14, 25-34 are 12x14, 35-40 are 10x14,
+// 41-47 are 12x14, 48-58 are 12x16, 59-63 are 6x6.
+// Row/col layout groups by size section for the unit map.
+// Rent defaults: 6x6=$49, 10x14=$89, 12x14=$109, 12x16=$129, 12x28=$199
+const UNIT_RENT: Record<string, number> = {
+  "6x6": 49,
+  "10x14": 89,
+  "12x14": 109,
+  "12x16": 129,
+  "12x28": 199,
+};
+
+// Raw facility data: [unitNumber, tenantName|"", size]
+const RAW_UNITS: [number, string, string][] = [
+  [1, "Jodi Bosly", "10x14"],
+  [2, "Darrell Trip", "10x14"],
+  [3, "Seth Fesler", "10x14"],
+  [4, "Natalie Murphy", "10x14"],
+  [5, "Brandy (Thomas) Burton", "10x14"],
+  [6, "Rebecca Smith", "10x14"],
+  [7, "Rebecca Smith", "10x14"],
+  [8, "Steve Bowen", "10x14"],
+  [9, "A to Z", "10x14"],
+  [10, "Seth Fesler", "10x14"],
+  [11, "Jodi Bosly", "10x14"],
+  [12, "Rachel Beitzel", "10x14"],
+  [13, "Teeples", "10x14"],
+  [14, "Kathy Smith", "10x14"],
+  [15, "Colleen Romero", "10x14"],
+  [16, "Tami Smith", "10x14"],
+  [17, "Andy Gardner", "10x14"],
+  [18, "Joan Oglasbee", "10x14"],
+  [19, "Rick Roedl", "10x14"],
+  [20, "Rick Roedl", "10x14"],
+  [21, "Trudy Ward", "10x14"],
+  [22, "Steve Bowen", "10x14"],
+  [23, "Jana Wagner", "10x14"],
+  [24, "Russell Talbet", "10x14"],
+  [25, "Ricci Walters", "12x14"],
+  [26, "Ed Jones", "12x14"],
+  [27, "Susan Wittman", "12x14"],
+  [28, "Lana Tripp", "12x14"],
+  [29, "Polly Scott", "12x14"],
+  [30, "", "12x14"],
+  [31, "Travis Whipple", "12x14"],
+  [32, "Debra Browning", "12x14"],
+  [33, "Norm Jaussi", "12x14"],
+  [34, "", "12x14"],
+  [35, "Denise Thomas", "10x14"],
+  [36, "Pat Rojas", "10x14"],
+  [37, "Fonnie Miller", "10x14"],
+  [38, "Frank (Warren) Schieman", "10x14"],
+  [39, "", "10x14"],
+  [40, "", "10x14"],
+  [41, "Dan Couch", "12x14"],
+  [42, "Tyra Neal", "12x14"],
+  [43, "Nicole Martin", "12x14"],
+  [44, "Frank (Warren) Schieman", "12x14"],
+  [45, "Christi Murdock", "12x14"],
+  [46, "Gayla Clark", "12x14"],
+  [47, "", "12x14"],
+  [48, "Susan Wittman", "12x16"],
+  [49, "Judy Jones", "12x16"],
+  [50, "William (Harley) Jeppsen", "12x16"],
+  [51, "Josh Wray", "12x16"],
+  [52, "Don Olson", "12x16"],
+  [53, "Sandra McBride", "12x16"],
+  [54, "Frank (Warren) Schieman", "12x16"],
+  [55, "Frank (Warren) Schieman", "12x16"],
+  [56, "Jones Heating", "12x16"],
+  [57, "Debora Petit", "12x16"],
+  [58, "Nicole Martin", "12x16"],
+  [59, "", "6x6"],
+  [60, "MVI", "6x6"],
+  [61, "Lorranie", "6x6"],
+  [62, "", "6x6"],
+  [63, "", "6x6"],
 ];
 
-const DEMO_TENANTS: Tenant[] = [
-  {
-    id: 1,
-    name: "Alice Johnson",
-    email: "alice@example.com",
-    phone: "555-0101",
-    address: "45 Oak Avenue, Springfield, IL",
+// Assign row/col: units 1-24 (10x14, cols 0-11 rows 0-1),
+// 25-34 (12x14, row 2), 35-40 (10x14, row 3), 41-47 (12x14, row 4),
+// 48-58 (12x16, row 5), 59-63 (6x6, row 6)
+function assignRowCol(unitNum: number): { row: number; col: number } {
+  if (unitNum >= 1 && unitNum <= 12) return { row: 0, col: unitNum - 1 };
+  if (unitNum >= 13 && unitNum <= 24) return { row: 1, col: unitNum - 13 };
+  if (unitNum >= 25 && unitNum <= 34) return { row: 2, col: unitNum - 25 };
+  if (unitNum >= 35 && unitNum <= 40) return { row: 3, col: unitNum - 35 };
+  if (unitNum >= 41 && unitNum <= 47) return { row: 4, col: unitNum - 41 };
+  if (unitNum >= 48 && unitNum <= 58) return { row: 5, col: unitNum - 48 };
+  if (unitNum >= 59 && unitNum <= 63) return { row: 6, col: unitNum - 59 };
+  return { row: 0, col: 0 };
+}
+
+const DEMO_UNITS: StorageUnit[] = RAW_UNITS.map(([num, tenant, size]) => {
+  const { row, col } = assignRowCol(num);
+  return {
+    id: num,
+    facilityId: 1,
+    unitNumber: String(num),
+    size,
+    floor: 1,
+    row,
+    col,
+    monthlyRent: UNIT_RENT[size] ?? 89,
+    status: tenant ? "OCCUPIED" : ("VACANT" as UnitStatus),
+    notes: "",
+  };
+});
+
+// Build unique tenant list from RAW_UNITS
+const _uniqueTenantNames = [
+  ...new Set(RAW_UNITS.map(([, name]) => name).filter((n) => n !== "")),
+];
+const TENANT_ID_MAP: Record<string, number> = {};
+_uniqueTenantNames.forEach((name, idx) => {
+  TENANT_ID_MAP[name] = idx + 1;
+});
+
+const DEMO_TENANTS: Tenant[] = _uniqueTenantNames.map((name, idx) => {
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, 12);
+  return {
+    id: idx + 1,
+    name,
+    email: `${slug}@countrylanestorage.com`,
+    phone: "",
+    address: "",
     preferredPaymentMethod: "CARD",
-  },
-  {
-    id: 2,
-    name: "Bob Martinez",
-    email: "bob@example.com",
-    phone: "555-0202",
-    address: "78 Elm Street, Springfield, IL",
-    preferredPaymentMethod: "ACH",
-  },
-  {
-    id: 3,
-    name: "Carol Smith",
-    email: "carol@example.com",
-    phone: "555-0303",
-    address: "12 Pine Road, Springfield, IL",
-    preferredPaymentMethod: "CARD",
-  },
-];
+  };
+});
 
-const DEMO_LEASES: Lease[] = [
-  {
-    id: 1,
-    tenantId: 1,
-    unitId: 2,
-    startDate: "2025-01-15",
-    monthlyRent: 49,
-    billingDay: 15,
-    autoPay: true,
-    status: "ACTIVE",
-  },
-  {
-    id: 2,
-    tenantId: 1,
-    unitId: 6,
-    startDate: "2025-03-01",
-    monthlyRent: 89,
-    billingDay: 1,
-    autoPay: false,
-    status: "ACTIVE",
-  },
-  {
-    id: 3,
-    tenantId: 2,
-    unitId: 10,
-    startDate: "2024-11-10",
-    monthlyRent: 149,
-    billingDay: 10,
-    autoPay: true,
-    status: "ACTIVE",
-  },
-  {
-    id: 4,
-    tenantId: 3,
-    unitId: 14,
-    startDate: "2025-02-20",
-    monthlyRent: 249,
-    billingDay: 20,
-    autoPay: false,
-    status: "ACTIVE",
-  },
-  {
-    id: 5,
-    tenantId: 2,
-    unitId: 15,
-    startDate: "2025-01-01",
-    monthlyRent: 249,
-    billingDay: 1,
-    autoPay: false,
-    status: "DELINQUENT",
-  },
-  {
-    id: 6,
-    tenantId: 3,
-    unitId: 3,
-    startDate: "2025-02-01",
-    monthlyRent: 49,
-    billingDay: 1,
-    autoPay: true,
-    status: "ACTIVE",
-  },
-];
+// Generate one lease per occupied unit
+const DEMO_LEASES: Lease[] = RAW_UNITS.filter(
+  ([, tenant]) => tenant !== "",
+).map(([num, tenant, size], idx) => ({
+  id: idx + 1,
+  tenantId: TENANT_ID_MAP[tenant],
+  unitId: num,
+  startDate: "2024-01-01",
+  monthlyRent: UNIT_RENT[size] ?? 89,
+  billingDay: 1,
+  autoPay: false,
+  status: "ACTIVE" as LeaseStatus,
+}));
 
-const DEMO_INVOICES: Invoice[] = [
-  {
-    id: 1,
-    leaseId: 1,
-    periodStart: "2026-02-15",
-    periodEnd: "2026-03-14",
-    dueDate: "2026-02-15",
-    amount: 49,
-    status: "PAID",
-    lastSentAt: "2026-02-10",
-  },
-  {
-    id: 2,
-    leaseId: 1,
-    periodStart: "2026-03-15",
-    periodEnd: "2026-04-14",
-    dueDate: "2026-03-15",
-    amount: 49,
-    status: "SENT",
-    lastSentAt: "2026-03-01",
-  },
-  {
-    id: 3,
-    leaseId: 2,
-    periodStart: "2026-03-01",
-    periodEnd: "2026-03-31",
-    dueDate: "2026-03-01",
-    amount: 89,
-    status: "OVERDUE",
-    lastSentAt: "2026-02-25",
-  },
-  {
-    id: 4,
-    leaseId: 3,
-    periodStart: "2026-02-10",
-    periodEnd: "2026-03-09",
-    dueDate: "2026-02-10",
-    amount: 149,
-    status: "PAID",
-    lastSentAt: "2026-02-05",
-  },
-  {
-    id: 5,
-    leaseId: 4,
-    periodStart: "2026-02-20",
-    periodEnd: "2026-03-19",
-    dueDate: "2026-02-20",
-    amount: 249,
-    status: "OVERDUE",
-    lastSentAt: "2026-02-15",
-  },
-  {
-    id: 6,
-    leaseId: 5,
-    periodStart: "2026-01-01",
-    periodEnd: "2026-01-31",
-    dueDate: "2026-01-01",
-    amount: 249,
-    status: "OVERDUE",
-    lastSentAt: "2025-12-27",
-  },
-];
-
-const DEMO_PAYMENTS: Payment[] = [
-  {
-    id: 1,
-    tenantId: 1,
-    invoiceId: 1,
-    paymentDate: "2026-02-14",
-    amount: 49,
-    method: "CARD",
-    transactionId: "ch_demo_001",
-    status: "SUCCESS",
-  },
-  {
-    id: 2,
-    tenantId: 2,
-    invoiceId: 4,
-    paymentDate: "2026-02-09",
-    amount: 149,
-    method: "ACH",
-    transactionId: "ch_demo_002",
-    status: "SUCCESS",
-  },
-];
+const DEMO_INVOICES: Invoice[] = [];
+const DEMO_PAYMENTS: Payment[] = [];
 
 const DEMO_USERS: (User & { password: string })[] = [
   {
@@ -410,30 +185,6 @@ const DEMO_USERS: (User & { password: string })[] = [
     role: "ADMIN",
     name: "Admin User",
     tenantId: undefined,
-  },
-  {
-    id: 2,
-    email: "alice@example.com",
-    password: "Customer1!",
-    role: "CUSTOMER",
-    name: "Alice Johnson",
-    tenantId: 1,
-  },
-  {
-    id: 3,
-    email: "bob@example.com",
-    password: "Customer1!",
-    role: "CUSTOMER",
-    name: "Bob Martinez",
-    tenantId: 2,
-  },
-  {
-    id: 4,
-    email: "carol@example.com",
-    password: "Customer1!",
-    role: "CUSTOMER",
-    name: "Carol Smith",
-    tenantId: 3,
   },
 ];
 
@@ -515,12 +266,14 @@ interface AppState {
 
 // ─── ID Generators ────────────────────────────────────────────────────────────
 
+// These are computed at module load time after the demo data arrays are built
+// unit IDs go 1–63, tenant IDs 1–N_unique_tenants, lease IDs 1–N_occupied
 let _nextId = {
-  unit: 17,
-  tenant: 4,
-  lease: 7,
-  invoice: 7,
-  payment: 3,
+  unit: 64,
+  tenant: 100,
+  lease: 100,
+  invoice: 1,
+  payment: 1,
   facility: 2,
 };
 
@@ -843,7 +596,7 @@ export const useAppStore = create<AppState>()(
       },
     }),
     {
-      name: "countrylane-storage",
+      name: "countrylane-storage-v2",
       partialize: (state) => ({
         currentUser: state.currentUser,
         facilities: state.facilities,
